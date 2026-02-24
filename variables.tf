@@ -3,10 +3,13 @@ variable "vpc_name" {
 
 }
 variable "region_name" {
-  default = "us-west-2"
+  default = "us-east-1"
 
 }
-variable "cluster_name" {
-  default = "my-eks-cluster"
-  
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
 }
+

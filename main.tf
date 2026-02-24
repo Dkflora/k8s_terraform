@@ -8,17 +8,15 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  enable_irsa                    = true
-  cluster_endpoint_public_access  = true
-
-  # Quick dev fix — admin for Terraform user
+  enable_irsa                          = true
+  cluster_endpoint_public_access       = true
   enable_cluster_creator_admin_permissions = true
 
   eks_managed_node_groups = {
     initial = {
-      min_size       = 2
-      max_size       = 4
-      desired_size   = 2
+      min_size      = 2
+      max_size      = 4
+      desired_size  = 2
       instance_types = ["t3.medium"]
     }
   }
@@ -28,14 +26,19 @@ module "eks" {
     Terraform   = "true"
   }
 }
+
+
+
+## Wait fot the cluster to be fully ready
+
 resource "null_resource" "wait_for_cluster" {
   depends_on = [module.eks]
 
   provisioner "local-exec" {
     command = <<EOT
-      aws eks wait cluster-active --region ${var.region_name} --name my-eks-cluster
-      aws eks update-kubeconfig --region us-west-2 --name my-eks-cluster
-      echo "Waiting for cluster to be ready..."
+aws eks wait cluster-active --region ${var.aws_region} --name ${module.eks.cluster_name}
+aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}
+echo "Cluster is ready."
       sleep 30
     EOT
     interpreter = ["cmd", "/c"]

@@ -1,23 +1,20 @@
-
-# Providers
 terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.13"
+    }
+
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = "~> 2.38"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.17"
-    }
-    time = {
-      source  = "hashicorp/time"
-      version = "~> 0.9"
-    }
+
     null = {
       source  = "hashicorp/null"
       version = "~> 3.2"
@@ -26,15 +23,9 @@ terraform {
 }
 
 provider "aws" {
-  region = var.region_name
+  region = "us-east-1"
 }
- 
-  
 
-  
-
-
-# Kubernetes provider with retry logic
 provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
@@ -46,7 +37,6 @@ provider "kubernetes" {
   }
 }
 
-# Helm provider with retry logic
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
@@ -58,5 +48,4 @@ provider "helm" {
       args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
     }
   }
-  
 }
