@@ -1,4 +1,3 @@
-
 resource "null_resource" "helm_repo_setup" {
   depends_on = [null_resource.wait_for_cluster]
 
@@ -15,15 +14,10 @@ resource "null_resource" "helm_repo_setup" {
   }
 }
 
-# Ensure Helm repos are ready
 resource "time_sleep" "wait_for_helm" {
-  depends_on = [null_resource.helm_repo_setup]
+  depends_on      = [null_resource.helm_repo_setup]
   create_duration = "10s"
 }
-
-##############################################
-# Helm Releases for EFS CSI Driver, ALB Controller, ArgoCD, Prometheus
-##############################################
 
 # First: EFS CSI Driver
 resource "helm_release" "efs_csi_driver" {
@@ -31,7 +25,7 @@ resource "helm_release" "efs_csi_driver" {
   repository = "https://kubernetes-sigs.github.io/aws-efs-csi-driver/"
   chart      = "aws-efs-csi-driver"
   namespace  = "kube-system"
-  
+
   depends_on = [
     module.eks,
     module.efs_csi_irsa,
@@ -60,7 +54,7 @@ resource "helm_release" "alb_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  
+
   depends_on = [
     module.eks,
     module.alb_controller_irsa,
@@ -98,9 +92,8 @@ resource "helm_release" "alb_controller" {
   }
 }
 
-# Third: Wait for ALB controller to be ready
 resource "time_sleep" "wait_for_alb_controller" {
-  depends_on = [helm_release.alb_controller]
+  depends_on      = [helm_release.alb_controller]
   create_duration = "30s"
 }
 
@@ -112,7 +105,7 @@ resource "helm_release" "argocd" {
   namespace        = "argocd"
   create_namespace = true
   timeout          = 300
-  
+
   depends_on = [
     module.eks,
     time_sleep.wait_for_helm,
@@ -133,7 +126,7 @@ resource "helm_release" "prometheus" {
   namespace        = "monitoring"
   create_namespace = true
   timeout          = 300
-  
+
   depends_on = [
     module.eks,
     time_sleep.wait_for_helm,
@@ -156,7 +149,6 @@ resource "helm_release" "prometheus" {
   }
 }
 
-# Sixth: Wait for everything to be ready
 resource "time_sleep" "wait_for_helm_apps" {
   depends_on = [
     helm_release.efs_csi_driver,
