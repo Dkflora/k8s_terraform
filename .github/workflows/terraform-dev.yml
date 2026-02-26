@@ -16,12 +16,11 @@ permissions:
   contents: read
 
 env:
+  # IMPORTANT: must match your repo folder name exactly (case-sensitive)
   TF_DIR: k8s_terraform_code
   ENV: dev
+  AWS_REGION: us-east-1
   TF_IN_AUTOMATION: "true"
-  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  AWS_REGION: ${{ secrets.AWS_REGION }}
 
 jobs:
   terraform:
@@ -32,16 +31,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug - list folders
+        run: |
+          pwd
+          ls -la
+          echo "-----"
+          find . -maxdepth 2 -type d -print
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Security scan 
       - name: Checkov Scan
         uses: bridgecrewio/checkov-action@v12
         with:
@@ -49,7 +54,6 @@ jobs:
           framework: terraform
           soft_fail: false
 
-      # Backend bootstrap 
       - name: Bootstrap S3 backend (idempotent)
         run: |
           set -euo pipefail
@@ -86,7 +90,6 @@ jobs:
 
           echo "TF_STATE_BUCKET=${BUCKET}" >> $GITHUB_ENV
 
-      # Terraform steps 
       - name: Terraform fmt
         working-directory: ${{ env.TF_DIR }}
         run: terraform fmt -check -recursive
@@ -114,9 +117,6 @@ jobs:
         working-directory: ${{ env.TF_DIR }}
         run: terraform apply -auto-approve
 
-  
-  # Manual DESTROY job (only runs when triggered)
-  
   destroy:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true'
     runs-on: ubuntu-latest
@@ -125,13 +125,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug - list folders
+        run: |
+          pwd
+          ls -la
+          echo "-----"
+          find . -maxdepth 2 -type d -print
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set backend bucket
