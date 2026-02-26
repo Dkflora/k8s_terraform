@@ -1,15 +1,20 @@
-# Local .terraform directory
-**/.terraform/*
-.terraform.lock.hcl
+# Terraform local directories
+.terraform/
 
 # Terraform state files
 *.tfstate
 *.tfstate.*
 
+# Crash logs
+crash.log
+
 # Sensitive variable files
 *.tfvars
 *.tfvars.json
 
+# CLI configuration files
+.terraformrc
+terraform.rc
 
 
 
